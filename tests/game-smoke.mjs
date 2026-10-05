@@ -20,14 +20,25 @@ const raw={
 };
 globalThis.__osloDb=raw;
 function compile(src){return ts.transpileModule(src,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;}
+fs.writeFileSync(path.join(temp,'identity.mjs'),compile(fs.readFileSync('lib/identity.ts','utf8')));
 fs.writeFileSync(path.join(temp,'game.mjs'),compile(fs.readFileSync('lib/game.ts','utf8')));
-fs.writeFileSync(path.join(temp,'route.mjs'),compile(fs.readFileSync('app/api/game/route.ts','utf8').replace("import {db} from '@/db/raw';","const db=()=>globalThis.__osloDb;").replace("from '@/lib/game'","from './game.mjs'")));
+fs.writeFileSync(path.join(temp,'route.mjs'),compile(fs.readFileSync('app/api/game/route.ts','utf8').replace("import {db} from '@/db/raw';","const db=()=>globalThis.__osloDb;").replace("from '@/lib/game'","from './game.mjs'").replace("from '@/lib/identity'","from './identity.mjs'")));
 const {POST,GET}=await import(path.join(temp,'route.mjs'));
 let time=1800000000000;const actualNow=Date.now;Date.now=()=>time;
 let state;
 async function post(op,args={},user='host',expected=200){const req=new Request('https://local.test/api/game',{method:'POST',headers:{'Content-Type':'application/json',...(user?{'oai-authenticated-user-id':user}:{})},body:JSON.stringify({op,id:state?.game.id,version:state?.version,...args})});const r=await POST(req);const d=await r.json();assert.equal(r.status,expected,JSON.stringify(d));if(d.game)state=d;return d;}
 async function read(user,id=state.game.id,expected=200){const r=await GET(new Request('https://local.test/api/game?id='+id,{headers:user?{'oai-authenticated-user-id':user}:{}}));assert.equal(r.status,expected);return r.json();}
 try{
+ const {authenticatedUserKey}=await import(path.join(temp,'identity.mjs'));
+ const legacy=new Request('https://local.test/api/game',{headers:{'oai-authenticated-user-email':'Player@example.com'}});
+ const key=await authenticatedUserKey(legacy);
+ assert.ok(key.startsWith('legacy-email:'));
+ assert.equal(key,await authenticatedUserKey(new Request('https://local.test',{headers:{'oai-authenticated-user-email':'player@example.com'}})));
+ assert.equal(await authenticatedUserKey(new Request('https://local.test',{headers:{'oai-authenticated-user-id':'stable-id','oai-authenticated-user-email':'player@example.com'}})),'stable-id');
+ assert.equal(await authenticatedUserKey(new Request('https://local.test')),null);
+ const legacyCreate=await POST(new Request('https://local.test/api/game',{method:'POST',headers:{'Content-Type':'application/json','oai-authenticated-user-email':'player@example.com'},body:JSON.stringify({op:'create',name:'Legacy session',teams:['A','B'],hideMinutes:30})}));
+ assert.equal(legacyCreate.status,200);const legacyGame=await legacyCreate.json();
+ const legacyRead=await GET(new Request('https://local.test/api/game?id='+legacyGame.game.id,{headers:legacy.headers}));assert.equal(legacyRead.status,200);
  await post('create',{name:'Integration test',teams:['Hiders','Seekers'],hideMinutes:1});const id=state.game.id;const [hider,seeker]=state.game.teams;
  await post('join',{team:seeker.id},'seeker');await read('outsider',id,403);await read('',id,401);
  await post('hand',{text:'Secret bonus card'},'host');assert.equal((await read('seeker')).game.privateHand,'');assert.equal((await read('host')).game.privateHand,'Secret bonus card');
