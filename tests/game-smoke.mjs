@@ -36,6 +36,16 @@ try{
  await post('location',{location:{point:[59.91,10.75],accuracy:8}},'host',403);
  await post('location',{location:{point:[59.91,10.75],accuracy:8}},'seeker');assert.equal((await read('host')).locations.length,1);
  await post('start',{},'seeker',403);await post('start');assert.equal(state.game.phase,'hiding');time+=60001;
+ await post('addCard',{name:'Hidden bonus',type:'time',minutes:7,effect:''});
+ await post('addCard',{name:'Private curse',type:'curse',minutes:0,effect:'Complete the challenge',blocks:true});
+ assert.equal((await read('seeker')).game.cards.length,0);
+ await post('addCard',{name:'Cheat',type:'time',minutes:999},'seeker',403);
+ const curseId=state.game.cards.at(-1).id;
+ await post('playCard',{card:curseId,confirmCost:false},'host',400);
+ await post('playCard',{card:curseId,confirmCost:true});assert.equal(state.game.curses[0].end,0);assert.equal(state.game.cards.length,1);
+ await post('playCard',{card:curseId,confirmCost:true},'host',400);
+ await post('ask',{questionId:'radar-0',start:[59.91,10.75],distance:500},'seeker',400);
+ await post('clearCurse',{curse:state.game.curses[0].id},'seeker');
  await post('ask',{questionId:'radar-0',start:[59.91,10.75],distance:500},'seeker');const first=state.game.questions.at(-1);await post('ask',{questionId:'radar-1',start:[59.91,10.75],distance:1000},'seeker',400);
  await post('answer',{question:first.id,answer:'No'},'seeker',403);time+=310000;await post('answer',{question:first.id,answer:'No'});assert.equal(state.game.questions[0].late,true);assert.equal(state.game.deducted,10000);
  await post('ask',{questionId:'radar-0',start:[59.91,10.75],distance:500},'seeker',400);
@@ -46,7 +56,7 @@ try{
  await post('ask',{questionId:'thermometer-0',start:[59.91,10.75],distance:1000},'seeker');assert.equal(state.game.questions.at(-1).status,'travelling');
  await post('thermoEnd',{question:state.game.questions.at(-1).id,end:[59.9101,10.75]},'seeker',400);
  await post('thermoEnd',{question:state.game.questions.at(-1).id,end:[59.93,10.75]},'seeker');await post('answer',{question:state.game.questions.at(-1).id,answer:'Hotter'});
- await post('catch',{bonus:5});assert.equal(state.game.scores.length,1);assert.equal(state.game.scores[0].bonus,5);
- await post('settings',{hider:seeker.id,hideMinutes:1,rules:'Test rules',houseTentacle:false});await post('start');assert.equal(state.game.round,2);assert.equal(state.game.questions.length,0);assert.equal(state.game.marks.length,1);
+ await post('catch',{bonus:5});assert.equal(state.game.scores.length,1);assert.equal(state.game.scores[0].bonus,12);
+ await post('settings',{hider:seeker.id,hideMinutes:1,rules:'Test rules',houseTentacle:false});await post('start');assert.equal(state.game.round,2);assert.equal(state.game.cards.length,0);assert.equal(state.game.questions.length,0);assert.equal(state.game.marks.length,1);
  console.log('PASS: membership, roles, hider privacy, GPS guards, shared boundaries, round transitions, question lock, late penalties, repeats, stale writes, pause/resume, thermometer distance, scoring and resets.');
 }finally{Date.now=actualNow;sqlite.close();fs.rmSync(temp,{recursive:true,force:true});delete globalThis.__osloDb;}

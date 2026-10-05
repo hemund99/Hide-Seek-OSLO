@@ -29,3 +29,9 @@ Type-check with the selected package manager's `exec tsc --noEmit`. Build using 
 ## Boundaries
 
 Not affiliated with Jet Lag, Nebula or Ruter. Physical deck drawing, casting costs, complex curse effects and exact photo framing are handled by the players. Timer settings and tentacle enablement can represent house rules. No Street View, automatic hider detection, background tracking service, or automatic transit disruption refresh.
+
+## Role and map update
+
+Hiders now have a private structured card hand: add physical draws, discard, play curses/power-ups, and hold bonus cards. Seekers retain the question workspace. Played curse effects become public; timed and completion-based curses can block questions. Held time bonuses are included automatically at catch. Generic power-up effects and casting costs remain manually resolved. The card hand is filtered server-side, including when the host is seeking.
+
+The default city-plan map uses label-free CARTO tiles and dark building polygons decoded from CARTO/OpenStreetMap vector tiles at zoom 14+. Labels and buildings can be toggled, and a street-map view remains available. No Google Maps API or user API key is needed. No Overpass dependency is used.
