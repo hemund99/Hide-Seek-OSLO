@@ -3,6 +3,7 @@ import ts from 'typescript';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {DatabaseSync} from 'node:sqlite';
 import assert from 'node:assert/strict';
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'oslo-game-test-'));
@@ -23,13 +24,13 @@ function compile(src){return ts.transpileModule(src,{compilerOptions:{target:ts.
 fs.writeFileSync(path.join(temp,'identity.mjs'),compile(fs.readFileSync('lib/identity.ts','utf8')));
 fs.writeFileSync(path.join(temp,'game.mjs'),compile(fs.readFileSync('lib/game.ts','utf8')));
 fs.writeFileSync(path.join(temp,'route.mjs'),compile(fs.readFileSync('app/api/game/route.ts','utf8').replace("import {db} from '@/db/raw';","const db=()=>globalThis.__osloDb;").replace("from '@/lib/game'","from './game.mjs'").replace("from '@/lib/identity'","from './identity.mjs'")));
-const {POST,GET}=await import(path.join(temp,'route.mjs'));
+const {POST,GET}=await import(pathToFileURL(path.join(temp,'route.mjs')).href);
 let time=1800000000000;const actualNow=Date.now;Date.now=()=>time;
 let state;
 async function post(op,args={},user='host',expected=200){const req=new Request('https://local.test/api/game',{method:'POST',headers:{'Content-Type':'application/json',...(user?{'oai-authenticated-user-id':user}:{})},body:JSON.stringify({op,id:state?.game.id,version:state?.version,...args})});const r=await POST(req);const d=await r.json();assert.equal(r.status,expected,JSON.stringify(d));if(d.game)state=d;return d;}
 async function read(user,id=state.game.id,expected=200){const r=await GET(new Request('https://local.test/api/game?id='+id,{headers:user?{'oai-authenticated-user-id':user}:{}}));assert.equal(r.status,expected);return r.json();}
 try{
- const {authenticatedUserKey}=await import(path.join(temp,'identity.mjs'));
+ const {authenticatedUserKey}=await import(pathToFileURL(path.join(temp,'identity.mjs')).href);
  const legacy=new Request('https://local.test/api/game',{headers:{'oai-authenticated-user-email':'Player@example.com'}});
  const key=await authenticatedUserKey(legacy);
  assert.ok(key.startsWith('legacy-email:'));

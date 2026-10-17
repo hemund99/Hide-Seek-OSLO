@@ -12,7 +12,7 @@ Question catalog: 58 small-game entries (20 matching, 20 measuring, 10 radar, 2 
 
 ## Map and location
 
-Leaflet renders CARTO/OpenStreetMap tiles. Actual geometry and coordinates for all five Ruter metro lines come from Entur's Journey Planner, saved in `public/transit.json`; source and retrieval time are shown in the map. These are timetable route patterns, not live train positions or a guarantee of today's service. Check Ruter before a game. Refresh the snapshot with `python scripts/data/refresh-transit.py` and publish the update.
+Leaflet renders Kartverket topo or grey tiles, without an API key. Actual geometry and coordinates for all five Ruter metro lines come from Entur's Journey Planner, saved in `public/transit.json`; source and retrieval time are shown in the map. These are timetable route patterns, not live train positions or a guarantee of today's service. Check Ruter before a game. Refresh the snapshot with `python scripts/data/refresh-transit.py` and publish the update only when requested.
 
 Seekers explicitly opt in to location sharing. The hiding team's location is rejected server-side. No background GPS guarantee: keep the page open. Location timestamps and accuracy circles show uncertainty; old updates use lower opacity. Game state polls every four seconds; position updates are sent no more often than every eight seconds. Map exclusions are manual and reversible. Radar answers draw reference rings, not automatic elimination masks. Place-category questions still require an agreed mapping provider; Google Maps links are included.
 
@@ -34,4 +34,4 @@ Not affiliated with Jet Lag, Nebula or Ruter. Physical deck drawing, casting cos
 
 Hiders now have a private structured card hand: add physical draws, discard, play curses/power-ups, and hold bonus cards. Seekers retain the question workspace. Played curse effects become public; timed and completion-based curses can block questions. Held time bonuses are included automatically at catch. Generic power-up effects and casting costs remain manually resolved. The card hand is filtered server-side, including when the host is seeking.
 
-The default city-plan map uses label-free CARTO tiles and dark building polygons decoded from CARTO/OpenStreetMap vector tiles at zoom 14+. Labels and buildings can be toggled, and a street-map view remains available. No Google Maps API or user API key is needed. No Overpass dependency is used.
+The map offers Kartverket topo and grey views. Metro station markers show regular lines on hover and click above the non-interactive route geometry. No Google Maps API or user API key is needed. No Overpass dependency is used.

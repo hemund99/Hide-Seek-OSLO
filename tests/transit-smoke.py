@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-data=json.loads((root/'public/transit.json').read_text())
+data=json.loads((root/'public/transit.json').read_text(encoding='utf-8'))
 stations={}
 for line in data['lines']:
     ends=set(line['name'].split(' - '))
