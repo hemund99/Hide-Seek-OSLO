@@ -23,10 +23,12 @@ globalThis.__osloDb=raw;
 function compile(src){return ts.transpileModule(src,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;}
 fs.writeFileSync(path.join(temp,'identity.mjs'),compile(fs.readFileSync('lib/identity.ts','utf8')));
 fs.writeFileSync(path.join(temp,'game.mjs'),compile(fs.readFileSync('lib/game.ts','utf8')));
-fs.writeFileSync(path.join(temp,'route.mjs'),compile(fs.readFileSync('app/api/game/route.ts','utf8').replace("import {db} from '@/db/raw';","const db=()=>globalThis.__osloDb;").replace("from '@/lib/game'","from './game.mjs'").replace("from '@/lib/identity'","from './identity.mjs'")));
+fs.writeFileSync(path.join(temp,'clues.mjs'),compile(fs.readFileSync('lib/clues.ts','utf8').replace("from './game'","from './game.mjs'")));
+fs.writeFileSync(path.join(temp,'route.mjs'),compile(fs.readFileSync('app/api/game/route.ts','utf8').replace("import {db} from '@/db/raw';","const db=()=>globalThis.__osloDb;").replace("from '@/lib/game'","from './game.mjs'").replace("from '@/lib/identity'","from './identity.mjs'").replace("from '@/lib/clues'","from './clues.mjs'")));
 const {POST,GET}=await import(pathToFileURL(path.join(temp,'route.mjs')).href);
 let time=1800000000000;const actualNow=Date.now;Date.now=()=>time;
 let state;
+const gps=(point=[59.91,10.75])=>({point,accuracy:5,capturedAt:time});
 async function post(op,args={},user='host',expected=200){const req=new Request('https://local.test/api/game',{method:'POST',headers:{'Content-Type':'application/json',...(user?{'oai-authenticated-user-id':user}:{})},body:JSON.stringify({op,id:state?.game.id,version:state?.version,...args})});const r=await POST(req);const d=await r.json();assert.equal(r.status,expected,JSON.stringify(d));if(d.game)state=d;return d;}
 async function read(user,id=state.game.id,expected=200){const r=await GET(new Request('https://local.test/api/game?id='+id,{headers:user?{'oai-authenticated-user-id':user}:{}}));assert.equal(r.status,expected);return r.json();}
 try{
@@ -56,18 +58,54 @@ try{
  await post('playCard',{card:curseId,confirmCost:false},'host',400);
  await post('playCard',{card:curseId,confirmCost:true});assert.equal(state.game.curses[0].end,0);assert.equal(state.game.cards.length,1);
  await post('playCard',{card:curseId,confirmCost:true},'host',400);
- await post('ask',{questionId:'radar-0',start:[59.91,10.75],distance:500},'seeker',400);
+ await post('ask',{questionId:'radar-0',gps:gps(),distance:500},'seeker',400);
  await post('clearCurse',{curse:state.game.curses[0].id},'seeker');
- await post('ask',{questionId:'radar-0',start:[59.91,10.75],distance:500},'seeker');const first=state.game.questions.at(-1);await post('ask',{questionId:'radar-1',start:[59.91,10.75],distance:1000},'seeker',400);
- await post('answer',{question:first.id,answer:'No'},'seeker',403);time+=310000;await post('answer',{question:first.id,answer:'No'});assert.equal(state.game.questions[0].late,true);assert.equal(state.game.deducted,10000);
  await post('ask',{questionId:'radar-0',start:[59.91,10.75],distance:500},'seeker',400);
- await post('ask',{questionId:'radar-0',start:[59.91,10.75],distance:500,repeat:true},'seeker');assert.equal(state.game.questions.at(-1).repeat,2);
+ await post('ask',{questionId:'radar-0',gps:{...gps(),capturedAt:time-60001},distance:500},'seeker',400);
+ await post('ask',{questionId:'radar-0',gps:{...gps(),accuracy:101},distance:500},'seeker',400);
+ await post('ask',{questionId:'radar-0',gps:gps(),distance:500},'seeker');const first=state.game.questions.at(-1);await post('ask',{questionId:'radar-1',gps:gps(),distance:1000},'seeker',400);
+ await post('answer',{question:first.id,answer:'Maybe near the station'},'host',400);
+ await post('answer',{question:first.id,answer:'No'},'seeker',403);time+=310000;await post('answer',{question:first.id,answer:'No'});assert.equal(state.game.questions[0].late,true);assert.equal(state.game.deducted,10000);
+ await post('ask',{questionId:'radar-0',gps:gps(),distance:500},'seeker',400);
+ await post('ask',{questionId:'radar-0',gps:gps(),distance:500,repeat:true},'seeker');assert.equal(state.game.questions.at(-1).repeat,2);
  const stale=state.version-1;await post('answer',{question:state.game.questions.at(-1).id,answer:'Yes',version:stale},'host',409);
  const deadline=state.game.questions.at(-1).deadline;await post('pause');time+=60000;await post('resume');assert.equal(state.game.questions.at(-1).deadline,deadline+60000);
  await post('answer',{question:state.game.questions.at(-1).id,answer:'Yes'});
- await post('ask',{questionId:'thermometer-0',start:[59.91,10.75],distance:1000},'seeker');assert.equal(state.game.questions.at(-1).status,'travelling');
- await post('thermoEnd',{question:state.game.questions.at(-1).id,end:[59.9101,10.75]},'seeker',400);
- await post('thermoEnd',{question:state.game.questions.at(-1).id,end:[59.93,10.75]},'seeker');await post('answer',{question:state.game.questions.at(-1).id,answer:'Hotter'});
+ await post('ask',{questionId:'thermometer-0',gps:gps(),distance:1000},'seeker');assert.equal(state.game.questions.at(-1).status,'travelling');
+ await post('thermoEnd',{question:state.game.questions.at(-1).id,gps:gps([59.9101,10.75])},'seeker',400);
+ await post('thermoEnd',{question:state.game.questions.at(-1).id,gps:gps([59.93,10.75])},'seeker');await post('answer',{question:state.game.questions.at(-1).id,answer:'Hotter'});
+ assert.equal(state.game.questions.at(-1).outcome,'hotter');
+ assert.equal(state.game.questions.at(-1).startAccuracy,5);
+ assert.equal(state.game.questions.at(-1).endAccuracy,5);
+ for(const questionId of ['matching-0','measuring-0']){
+  await post('ask',{questionId},'seeker',400);
+  await post('ask',{questionId,gps:gps()},'seeker');
+  assert.deepEqual(state.game.questions.at(-1).start,[59.91,10.75]);
+  await post('answer',{question:state.game.questions.at(-1).id,outcome:questionId.startsWith('matching')?'no':'closer',answer:'Additional context'});
+ }
+ await post('ask',{questionId:'photo-0'},'seeker');
+ await post('answer',{question:state.game.questions.at(-1).id,answer:'Cannot answer'});
+ const {excludedBy,geometricClues,clueVisual,stationRadius}=await import(pathToFileURL(path.join(temp,'clues.mjs')).href);
+ const radar={category:'Radar',status:'answered',start:[59.91,10.75],distance:500,startAccuracy:20,answer:'Yes'};
+ assert.equal(excludedBy(radar,[59.91,10.75]),false);
+ assert.equal(excludedBy(radar,[60,10.75]),true);
+ assert.equal(clueVisual(radar).label,'HIT');
+ const miss={...radar,outcome:'no',answer:'See notes'};
+ assert.equal(excludedBy(miss,[59.91,10.75]),true);
+ assert.equal(excludedBy(miss,[60,10.75]),false);
+ assert.equal(clueVisual(miss).label,'MISS');
+ assert.equal(excludedBy({...miss,startAccuracy:600},[59.91,10.75]),false);
+ assert.equal(excludedBy({...radar,answer:'Yes, maybe'},[60,10.75]),false);
+ for(const status of ['waiting','vetoed','travelling'])assert.equal(excludedBy({...radar,status},[60,10.75]),false);
+ const warmer={category:'Thermometer',status:'answered',outcome:'hotter',start:[59.91,10.75],end:[59.93,10.75],startAccuracy:10,endAccuracy:10};
+ assert.equal(excludedBy(warmer,[59.90,10.75]),true);
+ assert.equal(excludedBy(warmer,[59.94,10.75]),false);
+ assert.equal(excludedBy(warmer,[59.92,10.75]),false);
+ assert.equal(excludedBy({...warmer,outcome:'colder'},[59.94,10.75]),true);
+ assert.equal(excludedBy({...warmer,outcome:'null'},[59.94,10.75]),false);
+ assert.equal(geometricClues([radar,warmer,{...radar,status:'vetoed'},{...radar,answer:'Null'}]).length,2);
+ assert.ok(stationRadius(10)<stationRadius(12)&&stationRadius(12)<stationRadius(16));
+ console.log('PASS: GPS requirements/freshness/accuracy, explicit outcomes, radar hit/miss, thermometer hemispheres and uncertainty margins.');
  await post('catch',{bonus:5});assert.equal(state.game.scores.length,1);assert.equal(state.game.scores[0].bonus,12);
  await post('settings',{hider:seeker.id,hideMinutes:1,rules:'Test rules',houseTentacle:false});await post('start');assert.equal(state.game.round,2);assert.equal(state.game.cards.length,0);assert.equal(state.game.questions.length,0);assert.equal(state.game.marks.length,1);
  console.log('PASS: membership, roles, hider privacy, GPS guards, shared boundaries, round transitions, question lock, late penalties, repeats, stale writes, pause/resume, thermometer distance, scoring and resets.');
