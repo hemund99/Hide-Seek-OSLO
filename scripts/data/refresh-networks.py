@@ -44,3 +44,7 @@ for mode,items in output.items():
 # Keep the shipped phone assets bounded to the play area.
 import runpy
 runpy.run_path('scripts/data/compact-networks.py')
+
+# Railway service patterns may contain synthetic station-to-station chords.
+# Always replace those with the physical railway network before publishing.
+runpy.run_path('scripts/data/refresh-rail-geometry.py', run_name='__main__')
