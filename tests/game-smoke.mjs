@@ -24,7 +24,8 @@ function compile(src){return ts.transpileModule(src,{compilerOptions:{target:ts.
 fs.writeFileSync(path.join(temp,'identity.mjs'),compile(fs.readFileSync('lib/identity.ts','utf8')));
 fs.writeFileSync(path.join(temp,'game.mjs'),compile(fs.readFileSync('lib/game.ts','utf8')));
 fs.writeFileSync(path.join(temp,'clues.mjs'),compile(fs.readFileSync('lib/clues.ts','utf8').replace("from './game'","from './game.mjs'")));
-fs.writeFileSync(path.join(temp,'route.mjs'),compile(fs.readFileSync('app/api/game/route.ts','utf8').replace("import {db} from '@/db/raw';","const db=()=>globalThis.__osloDb;").replace("from '@/lib/game'","from './game.mjs'").replace("from '@/lib/identity'","from './identity.mjs'").replace("from '@/lib/clues'","from './clues.mjs'")));
+fs.writeFileSync(path.join(temp,'transit.mjs'),compile(fs.readFileSync('lib/transit.ts','utf8')));
+fs.writeFileSync(path.join(temp,'route.mjs'),compile(fs.readFileSync('app/api/game/route.ts','utf8').replace("import {db} from '@/db/raw';","const db=()=>globalThis.__osloDb;").replace("from '@/lib/game'","from './game.mjs'").replace("from '@/lib/identity'","from './identity.mjs'").replace("from '@/lib/clues'","from './clues.mjs'").replace("from '@/lib/transit'","from './transit.mjs'").replace("import {notifyGame} from '@/lib/push';","const notifyGame=async()=>{};")));
 const {POST,GET}=await import(pathToFileURL(path.join(temp,'route.mjs')).href);
 let time=1800000000000;const actualNow=Date.now;Date.now=()=>time;
 let state;
@@ -42,7 +43,9 @@ try{
  const legacyCreate=await POST(new Request('https://local.test/api/game',{method:'POST',headers:{'Content-Type':'application/json','oai-authenticated-user-email':'player@example.com'},body:JSON.stringify({op:'create',name:'Legacy session',teams:['A','B'],hideMinutes:30})}));
  assert.equal(legacyCreate.status,200);const legacyGame=await legacyCreate.json();
  const legacyRead=await GET(new Request('https://local.test/api/game?id='+legacyGame.game.id,{headers:legacy.headers}));assert.equal(legacyRead.status,200);
- await post('create',{name:'Integration test',teams:['Hiders','Seekers'],hideMinutes:1});const id=state.game.id;const [hider,seeker]=state.game.teams;
+ await post('create',{name:'Integration test',teams:['Hiders','Seekers'],hideMinutes:1});assert.deepEqual(state.game.networks,{metro:true,tram:false,bus:false,rail:false});const id=state.game.id;const [hider,seeker]=state.game.teams;
+ await post('settings',{hider:hider.id,hideMinutes:1,rules:'Test',networks:{metro:'yes'}},'host',400);
+ await post('settings',{hider:hider.id,hideMinutes:1,rules:'Test',networks:{metro:true,tram:true,bus:true,rail:false}});assert.equal(state.game.networks.tram,true);
  await post('join',{team:seeker.id},'seeker');await read('outsider',id,403);await read('',id,401);
  await post('hand',{text:'Secret bonus card'},'host');assert.equal((await read('seeker')).game.privateHand,'');assert.equal((await read('host')).game.privateHand,'Secret bonus card');
  await post('mark',{mark:{kind:'boundary',points:[[59.8,10.5],[59.8,11],[60,11]],label:'Area'}},'host');

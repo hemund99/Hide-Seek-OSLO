@@ -1,0 +1,4 @@
+import {networkModes,networkInfo,type Networks} from '@/lib/transit';
+export default function NetworkSwitches({value,onChange,disabled=false}:{value:Networks;onChange:(v:Networks)=>void;disabled?:boolean}){
+ return <fieldset className="network-switches" disabled={disabled}><legend>Transport networks</legend><p>Choose the networks for this game. Colours match the map.</p>{networkModes.map(mode=><label className="network-switch" key={mode} style={{'--network-color':networkInfo[mode].color} as React.CSSProperties}><span className="network-dot"/><span>Add {networkInfo[mode].label}</span><input role="switch" type="checkbox" checked={value[mode]} onChange={e=>onChange({...value,[mode]:e.target.checked})}/><span className="switch-track" aria-hidden="true"><span/></span><small>{value[mode]?'ON':'OFF'}</small></label>)}</fieldset>;
+}

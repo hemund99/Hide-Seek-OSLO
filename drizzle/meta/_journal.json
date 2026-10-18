@@ -15,6 +15,13 @@
       "when": 1791185871573,
       "tag": "0001_funny_nicolaos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792330374814,
+      "tag": "0002_open_prima",
+      "breakpoints": true
     }
   ]
 }

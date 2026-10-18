@@ -43,3 +43,18 @@ Radar uses explicit HIT/MISS results. Thermometer uses red HOTTER and blue COLDE
 Question GPS is captured once when sending, independently of continuous location sharing. A fix must be no older than 60 seconds and accurate to 100 metres or better. Thermometer travel must exceed the chosen distance plus both fixes’ accuracy margins. The app never requests the hider’s GPS.
 
 Run `node tests/gps-smoke.mjs` for GPS callback, error and freshness checks alongside the existing game and transit tests.
+
+
+## Phone play, transit and notifications
+
+Game creation and between-round settings have four shared switches: T-bane, tram, bus and train. Existing games default to T-bane. Routes, stops and the legend use matching mode colours; the five existing T-bane line colours are retained. Bus stops appear at zoom 14+ to keep the overview readable. Search includes enabled networks only. Extra networks cover the Oslo play area (59.75–60.05 N, 10.45–11.05 E), not every Norwegian route. Entur snapshots are scheduled geometry, not live closures or a guarantee that a service runs at the current time.
+
+Refresh extra networks with `python scripts/data/refresh-networks.py`; this also clips and deduplicates the assets for phones. The metro refresh and regression tests remain separate.
+
+Phones have a compact timer/control drawer, bottom Map / Questions / Field log / Teams navigation, 44px touch controls and 16px form fields. On each device, join a game and use Teams → Game notifications → Enable notifications. On iPhone/iPad, first add the site to the Home Screen from Safari and launch that icon. Use Test alert, then lock the phone and have another player send a question. Android users can enable in Chrome. Notification delivery depends on browser permission, connectivity and OS settings. In-app question/answer banners work while the game is open without push permission.
+
+Push uses a service worker, encrypted Web Push and per-device D1 subscriptions. Questions alert the hiding team; answers/vetoes alert seekers. The sending account is excluded. A phone subscription follows the most recently opened game, and can be disabled from that phone. Private answers, GPS and card contents are not included on lock screens. Failed push delivery does not roll back game actions; expired subscriptions are removed. No page caching is implemented, so private game responses are not stored in the service worker.
+
+Production `PUSH_PUBLIC_KEY` and `PUSH_PRIVATE_KEY` are Sites runtime secrets; never commit them or rotate existing keys casually. Generate a VAPID pair once with web-push. For local push testing supply separate development keys through the local runtime environment. Migration 0002 adds the push subscription table and index. Run `pnpm db:migrate:local` locally; Sites applies the migration during deployment.
+
+Validation: `pnpm typecheck`, `pnpm test:game`, `pnpm exec node tests/push-smoke.mjs`, `pnpm exec node tests/gps-smoke.mjs`, `python tests/transit-smoke.py`, then `pnpm build`. Push smoke tests mock delivery providers but exercise real payload encryption, recipient selection, membership checks and expiration cleanup. Physical iPhone/Android lock-screen delivery requires device testing.

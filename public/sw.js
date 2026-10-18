@@ -1,0 +1,4 @@
+self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+self.addEventListener('push',event=>{let data={};try{data=event.data.json();}catch{}event.waitUntil(self.registration.showNotification(data.title||'OSLO / Hide + Seek',{body:data.body||'Your game has an update.',icon:'/app-icon-192.png',badge:'/app-icon-192.png',tag:data.tag||'oslo-update',data:{url:/^\/\?game=[A-Z0-9]{12}$/.test(data.url)?data.url:'/'}}));});
+self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil((async()=>{const url=new URL(event.notification.data?.url||'/',self.location.origin).href;const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});for(const client of windows){if(client.url===url){await client.focus();return;}}await self.clients.openWindow(url);})());});
