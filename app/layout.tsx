@@ -1,4 +1,4 @@
 import type {Metadata} from 'next';
 import './globals.css';
 export const metadata:Metadata={title:'OSLO / Hide + Seek',description:'Your shared field companion for hide-and-seek on Oslo’s T-bane.',manifest:'/manifest.webmanifest',appleWebApp:{capable:true,title:'OSLO H+S',statusBarStyle:'default'},icons:{icon:'/favicon.svg',apple:'/app-icon-192.png'}};
-export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}
+export default function Layout({children}:{children:React.ReactNode}){return <html lang="en" data-theme="dark" suppressHydrationWarning><head><meta name="theme-color" content="#0b141e"/><script dangerouslySetInnerHTML={{__html:"try{var t=localStorage.getItem('oslo-field-theme')==='light'?'light':'dark';document.documentElement.dataset.theme=t;document.querySelector('meta[name=theme-color]').content=t==='dark'?'#0b141e':'#f2f5f4'}catch(e){}"}}/></head><body>{children}</body></html>}

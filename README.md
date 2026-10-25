@@ -58,3 +58,9 @@ Push uses a service worker, encrypted Web Push and per-device D1 subscriptions. 
 Production `PUSH_PUBLIC_KEY` and `PUSH_PRIVATE_KEY` are Sites runtime secrets; never commit them or rotate existing keys casually. Generate a VAPID pair once with web-push. For local push testing supply separate development keys through the local runtime environment. Migration 0002 adds the push subscription table and index. Run `pnpm db:migrate:local` locally; Sites applies the migration during deployment.
 
 Validation: `pnpm typecheck`, `pnpm test:game`, `pnpm exec node tests/push-smoke.mjs`, `pnpm exec node tests/gps-smoke.mjs`, `python tests/transit-smoke.py`, `python tests/rail-geometry-smoke.py`, then `pnpm build`. Push smoke tests mock delivery providers but exercise real payload encryption, recipient selection, membership checks and expiration cleanup. Physical iPhone/Android lock-screen delivery requires device testing.
+
+## Interface and appearance
+
+The field interface starts in dark mode. The sun/moon control switches between dark and light, remembers the choice on that browser, and applies it to dialogs and map controls as well. Only the Kartverket base tiles receive the night treatment; transit lines, station markers and clue colors retain their meaning. The theme does not change shared game settings.
+
+Map controls include stop search, a tool dock, and a layer panel. Local layer visibility changes what you see, while the four switches in game setup still determine the shared networks. Recenter returns to the Oslo overview without requesting GPS. Original SVG Oslo artwork and illustrated radar/thermometer results accompany the interface. Motion respects the device’s reduced-motion preference.
