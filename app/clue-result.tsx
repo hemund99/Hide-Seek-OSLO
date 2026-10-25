@@ -1,5 +1,6 @@
 import type {Asked} from '@/lib/game';
 import {clueVisual} from '@/lib/clues';
+import PhotoEvidence from './photo-evidence';
 import {ArrowDownRight,ArrowUpRight,Check,Minus,X} from 'lucide-react';
 
 function ClueArt({question}:{question:Asked}){
@@ -18,6 +19,7 @@ export default function ClueResult({question,compact=false}:{question:Asked;comp
     {visual.explanation&&<p>{visual.explanation}</p>}
     {question.answer&&question.answer.trim().toLowerCase()!==visual.outcome&&<p className="clue-answer-notes">{question.answer}</p>}
     {question.status==='answered'&&!visual.outcome&&<p>Interpret this answer manually on the map.</p>}
+    {question.photo&&<PhotoEvidence photo={question.photo} title={question.title}/>}
     </div>
   </div>;
 }

@@ -30,8 +30,10 @@ try{
  await notifyGame(g,'ask','s');assert.equal(sent.at(-1).url,h.endpoint);assert.equal(sent.length,1);
  assert.equal(sent[0].options.headers['Content-Encoding'],'aes128gcm');assert.ok(sent[0].options.headers.Authorization.includes('vapid'));assert.ok(sent[0].options.body.length>50);
  await notifyGame(g,'answer','h');assert.equal(sent.at(-1).url,s.endpoint);assert.equal(sent.length,2);
- await notifyGame(g,'location','s');assert.equal(sent.length,2);
- await post('s',{op:'test',subscription:h},400);await post('s',{op:'test',subscription:s});assert.equal(sent.length,3);
+ await notifyGame(g,'curse','h');assert.equal(sent.at(-1).url,s.endpoint);assert.equal(sent.length,3);
+ await notifyGame(g,'clearCurse','s');assert.equal(sent.at(-1).url,h.endpoint);assert.equal(sent.length,4);
+ await notifyGame(g,'location','s');assert.equal(sent.length,4);
+ await post('s',{op:'test',subscription:h},400);await post('s',{op:'test',subscription:s});assert.equal(sent.length,5);
  await post('s',{op:'remove',endpoint:h.endpoint});assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM push_subscriptions').get().n,2);
  globalThis.fetch=async()=>new Response('',{status:410});assert.equal(await sendPush(s,{}),false);assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM push_subscriptions').get().n,1);
  const config=await GET(new Request('https://local.test',{headers:{'oai-authenticated-user-id':'s'}}));assert.deepEqual(await config.json(),{publicKey:keys.publicKey});

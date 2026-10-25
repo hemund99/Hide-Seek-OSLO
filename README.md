@@ -18,7 +18,7 @@ Seekers explicitly opt in to location sharing. The hiding team's location is rej
 
 ## Persistence and privacy
 
-D1 stores rooms, memberships, game state and latest positions. R2 stores photo evidence, re-encoded client-side without original EXIF metadata. Membership is keyed to platform-authenticated user identity. Host, seeker and hider operations are authorized server-side. Private hand notes and seeker map annotations are filtered by role. Optimistic version checks prevent competing writes from silently overwriting state. Sharing a room code grants the ability to join a team; the game assumes cooperative participants. Site access is managed separately by the owner.
+D1 stores rooms, memberships, game state and latest positions. R2 stores photo evidence, re-encoded client-side without original EXIF metadata. Membership is keyed to platform-authenticated user identity. Host, seeker and hider operations are authorized server-side. Legacy private hand data and seeker map annotations are filtered by role. Optimistic version checks prevent competing writes from silently overwriting state. Sharing a room code grants the ability to join a team; the game assumes cooperative participants. Site access is managed separately by the owner.
 
 ## Validation
 
@@ -30,9 +30,15 @@ Type-check with the selected package manager's `exec tsc --noEmit`. Build using 
 
 Not affiliated with Jet Lag, Nebula or Ruter. Physical deck drawing, casting costs, complex curse effects and exact photo framing are handled by the players. Timer settings and tentacle enablement can represent house rules. No Street View, automatic hider detection, background tracking service, or automatic transit disruption refresh.
 
-## Role and map update
+## Physical deck and live controls
 
-Hiders now have a private structured card hand: add physical draws, discard, play curses/power-ups, and hold bonus cards. Seekers retain the question workspace. Played curse effects become public; timed and completion-based curses can block questions. Held time bonuses are included automatically at catch. Generic power-up effects and casting costs remain manually resolved. The card hand is filtered server-side, including when the host is seeking.
+The physical deck stays outside the app. There is no digital hand, card entry, hand limit or card inventory. Hiders answer incoming questions and use **Send a curse** to share the card name, clearing condition and optional timer. At the catch, the host enters the total time bonus from the physical cards. Historical score records stay intact; old stored hand bonuses are no longer added automatically.
+
+Every newly sent curse blocks questions immediately. Its timer is a reminder, and questions remain locked until players explicitly clear the curse. Multiple curses can coexist; every active curse must be cleared. The same guard applies to sending a new question and completing a thermometer journey, on both the client and server. An already pending answer can still be delivered while a curse is active. Clear a curse only once its physical condition has been resolved. Legacy curses retain their previous expiry.
+
+Seekers choose the question type and answer window. Preset radar radii are filled automatically; custom radar and thermometer questions also need the distance printed on the physical card. No reference text or repeat-cost confirmation is required in the app. Fresh GPS is captured when sending any non-photo question and when ending a thermometer journey. Repeated questions remain recorded; resolve any physical costs using the printed game.
+
+The field log and Latest answers show the structured outcome, notes and any attached photo. Hiders can attach evidence to any answer. Images are re-encoded to remove original location metadata, are available only to game members, and open at full size when tapped. Curses, clear events, questions and answers have in-app alerts and Web Push notifications. Lock-screen payloads contain no GPS, photos, answers or challenge details.
 
 The map offers Kartverket topo and grey views. Metro station markers show regular lines on hover and click above the non-interactive route geometry. No Google Maps API or user API key is needed. No Overpass dependency is used.
 
@@ -51,7 +57,7 @@ Game creation and between-round settings have four shared switches: T-bane, tram
 
 Refresh extra networks with `python scripts/data/refresh-networks.py`; this also clips and deduplicates the assets for phones. The refresh also replaces rail shapes with Bane NOR alignments. To refresh only railway geometry, run `python scripts/data/refresh-rail-geometry.py`. The metro refresh and regression tests remain separate.
 
-Phones have a compact timer/control drawer, bottom Map / Questions / Field log / Teams navigation, 44px touch controls and 16px form fields. On each device, join a game and use Teams → Game notifications → Enable notifications. On iPhone/iPad, first add the site to the Home Screen from Safari and launch that icon. Use Test alert, then lock the phone and have another player send a question. Android users can enable in Chrome. Notification delivery depends on browser permission, connectivity and OS settings. In-app question/answer banners work while the game is open without push permission.
+Phones have a compact timer/control drawer, bottom Map / Questions (Answer for hiders) / Field log / Teams navigation, 44px touch controls and 16px form fields. On each device, join a game and use Teams → Game notifications → Enable notifications. On iPhone/iPad, first add the site to the Home Screen from Safari and launch that icon. Use Test alert, then lock the phone and have another player send a question. Android users can enable in Chrome. Notification delivery depends on browser permission, connectivity and OS settings. In-app question/answer banners work while the game is open without push permission.
 
 Push uses a service worker, encrypted Web Push and per-device D1 subscriptions. Questions alert the hiding team; answers/vetoes alert seekers. The sending account is excluded. A phone subscription follows the most recently opened game, and can be disabled from that phone. Private answers, GPS and card contents are not included on lock screens. Failed push delivery does not roll back game actions; expired subscriptions are removed. No page caching is implemented, so private game responses are not stored in the service worker.
 

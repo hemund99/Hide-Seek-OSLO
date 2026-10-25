@@ -15,11 +15,14 @@ export async function sendPush(subscription:any,payload:object){
  if(!r.ok)throw Error('Push provider rejected delivery ('+r.status+').');return true;
 }
 export async function notifyGame(g:Game,op:string,actor:string){
- if(!['ask','thermoEnd','answer','veto'].includes(op))return;
- const question=op==='ask'||op==='thermoEnd';
- const rows=await db().prepare('SELECT p.subscription FROM push_subscriptions p JOIN members m ON m.game=p.game AND m.user=p.user WHERE p.game=? AND p.user<>? AND '+(question?'m.team=?':'m.team<>?')).bind(g.id,actor,g.hider).all<{subscription:string}>();
- const title=question?(op==='thermoEnd'?'Thermometer ready to answer':'New question received'):'Answer received';
- // Lock-screen payloads contain no GPS positions, answers, or private card data.
- const payload={title,body:'Open OSLO / Hide + Seek to view the '+(question?'question.':'answer.'),url:'/?game='+g.id,tag:g.id+'-'+g.round+'-'+g.questions.at(-1)?.id+'-'+op};
+ if(!['ask','thermoEnd','answer','veto','curse','clearCurse'].includes(op))return;
+ const question=op==='ask'||op==='thermoEnd',curse=op==='curse',cleared=op==='clearCurse';
+ const roleFilter=cleared?'':' AND m.team'+(question?'=?':'<>?');
+ const rows=await db().prepare('SELECT p.subscription FROM push_subscriptions p JOIN members m ON m.game=p.game AND m.user=p.user WHERE p.game=? AND p.user<>?'+roleFilter).bind(g.id,actor,...(cleared?[]:[g.hider])).all<{subscription:string}>();
+ const title=question?(op==='thermoEnd'?'Thermometer ready to answer':'New question received'):curse?'Curse received · questions locked':cleared?'Curse cleared':'Answer received';
+ // Lock-screen payloads contain no GPS, answers, photos or curse conditions.
+ const body=curse?'Open the game to see the challenge.':cleared?'Open the game to check whether questions are unlocked.':'Open OSLO / Hide + Seek to view the '+(question?'question.':'answer.');
+ const eventId=curse?g.curses?.at(-1)?.id:cleared?g.history?.[0]?.at:g.questions.at(-1)?.id;
+ const payload={title,body,url:'/?game='+g.id,tag:g.id+'-'+g.round+'-'+eventId+'-'+op};
  for(let i=0;i<rows.results.length;i+=10)await Promise.allSettled(rows.results.slice(i,i+10).map(async row=>{try{await sendPush(JSON.parse(row.subscription),payload);}catch{console.error('Push delivery failed; game action remains saved.');}}));
 }

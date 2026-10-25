@@ -422,3 +422,24 @@ input[type='checkbox'] { accent-color:var(--primary); }
  .has-game .mission-heading{display:none}
  .has-game .map-wrap,.has-game .map-loading{height:clamp(350px,calc(100svh - 240px),740px)}
 }
+
+/* Physical deck play: questions, evidence and curse locks. */
+.hider-controls .role-banner{margin-bottom:18px}
+.hider-waiting{padding:0 25px 24px;color:var(--muted-foreground);font-size:14px}
+.question-state-note{margin:0 25px 18px;padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface-raised);font-size:14px;color:var(--muted-foreground)}
+.question-card:disabled{cursor:not-allowed;opacity:.55;transform:none;box-shadow:none}
+.active-curses{margin:20px 25px;padding:18px;border:1px solid var(--violet);border-radius:18px;background:color-mix(in srgb,var(--violet) 9%,var(--surface))}
+.curse-lock-heading{display:flex;align-items:flex-start;gap:12px;color:var(--violet)}
+.curse-lock-heading svg{flex-shrink:0;margin-top:3px}
+.curse-lock-heading h2{font-size:18px}.curse-lock-heading p{font-size:14px;color:var(--muted-foreground);margin-top:6px}
+.active-curses article{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:16px;margin-top:16px;border-top:1px solid var(--border)}
+.active-curses article>div{min-width:0}.active-curses h3,.active-curses p{overflow-wrap:anywhere}
+.active-curses article p{font-size:14px;white-space:pre-wrap;margin:6px 0}.active-curses article small{display:block;margin-top:5px}
+.active-curses button{flex-shrink:0}.upload small{display:block;font-size:12px;line-height:1.6;margin-top:7px}
+.clue-result>div{min-width:0;flex:1}.photo-evidence{margin:14px 0 0;max-width:440px}
+.photo-evidence a{display:block;overflow:hidden;border:1px solid var(--border);border-radius:13px;text-decoration:none;background:var(--surface-soft)}
+.photo-evidence img{display:block;width:100%;height:auto;max-height:440px;object-fit:contain}
+.photo-evidence a>span{display:flex;align-items:center;gap:8px;padding:11px 13px;font-size:13px;color:var(--muted-foreground)}
+.photo-evidence a>span svg:last-child{margin-left:auto}.photo-unavailable{padding:20px;border:1px dashed var(--border);border-radius:12px}
+.photo-unavailable p{font-size:14px}.photo-unavailable button{margin-top:10px;min-height:44px;padding:8px 15px;border:1px solid var(--border);border-radius:10px;background:var(--surface-raised)}
+@media(max-width:760px){.active-curses{margin:15px;padding:15px}.active-curses article{align-items:stretch;flex-direction:column;gap:10px}.active-curses article button{align-self:flex-start}.question-state-note{margin:0 15px 15px}.hider-waiting{padding:0 15px 20px}.photo-evidence img{max-height:340px}}
